@@ -30,48 +30,55 @@ namespace MobileAppBackend.Controllers
         [HttpPost("register")]
         public IActionResult RegisterAsync(RegisterDTO dto)
         {
-            var exsistingUser = _repository.getByEmail(dto.Email);
-            if (exsistingUser != null)
+            try
             {
-                return BadRequest(new
+                var exsistingUser = _repository.getByEmail(dto.Email);
+                if (exsistingUser != null)
                 {
-                    statusCode = 422,
-                    message = "Email already in use"
-                });
-            }
+                    return BadRequest(new
+                    {
+                        statusCode = 422,
+                        message = "Email already in use"
+                    });
+                }
 
-            var user = new User
-            {
-                FirstName = dto.Firstname,
-                LastName = dto.Lastname,
-                Email = dto.Email,
-                DOB = dto.Dob,
-                Image = dto.Image,
-                Password = BCrypt.Net.BCrypt.HashPassword(dto.Password),
-                Gender = dto.Gender,
-                PhoneNumber = dto.Phone
-            };
-            var u = _repository.create(user);
-            Preference selectedPreference = dto.Preference;
-            var newuserPref = userPreferenceRepository.create(new UserPreference
-            {
-                PreferenceId = selectedPreference.Id,
-                UserId = u.Id
-            });
+                var user = new User
+                {
+                    FirstName = dto.Firstname,
+                    LastName = dto.Lastname,
+                    Email = dto.Email,
+                    DOB = dto.Dob,
+                    Image = dto.Image,
+                    Password = BCrypt.Net.BCrypt.HashPassword(dto.Password),
+                    Gender = dto.Gender,
+                    PhoneNumber = dto.Phone
+                };
+                var u = _repository.create(user);
+                Preference selectedPreference = dto.Preference;
+                var newuserPref = userPreferenceRepository.create(new UserPreference
+                {
+                    PreferenceId = selectedPreference.Id,
+                    UserId = u.Id
+                });
                 u.UserPreferences = new List<UserPreference>();
                 u.UserPreferences.Add(newuserPref);
-             
-            //var updatedUser = _repository.update(u);
-            //UserPreference userPreference = new UserPreference();
-            //userPreference.PreferenceId = dto.Preference.IdPreference;
-            //userPreference.UserId = u.IdUser;
-            //var savedUserPref = userPreferenceRepository.create(userPreference);
-            //u.UserPreferences.Add(savedUserPref);
-            return Ok(new
+
+                //var updatedUser = _repository.update(u);
+                return Ok(new
+                {
+                    statusCode = 200,
+                    message = "Success",
+                });
+            }
+            catch (Exception ex)
             {
-                statusCode = 200,
-                message = "Success",
-            });
+                Console.WriteLine(ex);
+                return BadRequest(new
+                {
+                    statusCode = 400,
+                    message = "An Error has occured while trying to register user"
+                });
+            }
         }
         [HttpPost("login")]
         public IActionResult Login(LoginDTO dto)
