@@ -17,7 +17,7 @@ namespace Let_sTalk.Data.Repos
         public UserPreference create(UserPreference userPreference)
         {
             _dbContext.userPreferences.Add(userPreference);
-            userPreference.Id = _dbContext.SaveChanges();
+            _dbContext.SaveChanges();
             return userPreference;
         }
 
@@ -54,7 +54,7 @@ namespace Let_sTalk.Data.Repos
             if (existingUserPreference != null)
             {
                 _dbContext.userPreferences.Update(userPreference);
-                userPreference.Id = _dbContext.SaveChanges();
+                _dbContext.SaveChanges();
                 return existingUserPreference;
             }else return null;
 

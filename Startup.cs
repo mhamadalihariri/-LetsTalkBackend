@@ -38,7 +38,9 @@ namespace LetsTalkBackend
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddCors();
+            services.AddCors(options => { options.AddDefaultPolicy(builder =>
+                        { 
+                            builder.WithOrigins("https://localhost:28327", "http://localhost:5001").AllowAnyHeader().AllowAnyMethod(); }); });
             services.AddDbContext<MyDbContext>(options => options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<IPreferenceRepository, PreferenceRepository>();

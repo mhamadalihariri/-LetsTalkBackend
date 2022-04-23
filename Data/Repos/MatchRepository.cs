@@ -20,7 +20,7 @@ namespace Let_sTalk.Data.Repos
         public Match create(Match match)
         {
             _dbContext.matches.Add(match);
-            match.IdMatch = _dbContext.SaveChanges();
+            _dbContext.SaveChanges();
             return match;
         }
 

@@ -18,7 +18,7 @@ namespace Let_sTalk.Data.Repos
         public User create(User user)
         {
             _dbContext.users.Add(user);
-            user.Id = _dbContext.SaveChanges();
+            _dbContext.SaveChanges();
             return user;
         }
 
@@ -35,7 +35,7 @@ namespace Let_sTalk.Data.Repos
         public User update(User user)
         {
             _dbContext.users.Update(user);
-            user.Id = _dbContext.SaveChanges();
+            _dbContext.SaveChanges();
             return user;
         }
     }

@@ -19,7 +19,7 @@ namespace Let_sTalk.Data.Repos
         Preference IPreferenceRepository.create(Preference pref)
         {
             _dbContext.preferences.Add(pref);
-            pref.Id = _dbContext.SaveChanges();
+            _dbContext.SaveChanges();
             return pref;
         }
 
