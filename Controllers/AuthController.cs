@@ -9,6 +9,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Let_sTalk.Models;
 using Let_sTalk.Data.IRepos;
+using LetsTalkBackend.DTOS;
 
 namespace MobileAppBackend.Controllers
 {
@@ -51,7 +52,8 @@ namespace MobileAppBackend.Controllers
                     Image = dto.Image,
                     Password = BCrypt.Net.BCrypt.HashPassword(dto.Password),
                     Gender = dto.Gender,
-                    PhoneNumber = dto.Phone
+                    PhoneNumber = dto.Phone,
+                    FirebaseId = dto.FirebaseId
                 };
                 var u = _repository.create(user);
                 Preference selectedPreference = dto.Preference;
@@ -68,6 +70,7 @@ namespace MobileAppBackend.Controllers
                 {
                     statusCode = 200,
                     message = "Success",
+                    //user = u
                 });
             }
             catch (Exception ex)
@@ -76,14 +79,14 @@ namespace MobileAppBackend.Controllers
                 return BadRequest(new
                 {
                     statusCode = 400,
-                    message = "An Error has occured while trying to register user"
+                    message = "An Error has occured while trying to register user",
                 });
             }
         }
         [HttpPost("login")]
         public IActionResult Login(LoginDTO dto)
         {
-            var user = _repository.getByEmail(dto.Email);
+            User user = _repository.getByEmail(dto.Email);
             if (user == null) return BadRequest(new
             {
                 statusCode = 401,
@@ -98,6 +101,20 @@ namespace MobileAppBackend.Controllers
                     message = "Invalid Credentials"
                 });
             }
+
+            UserDTO userDTO = new UserDTO();
+            userDTO.Email = user.Email;
+            userDTO.Id = user.Id;
+            userDTO.Firstname = user.FirstName;
+            userDTO.Lastname = user.LastName;
+            userDTO.PhoneNumber = user.PhoneNumber;
+            userDTO.DOB = user.DOB;
+            userDTO.Gender = user.Gender;
+            userDTO.Matches = user.Matches;
+            userDTO.Location = user.Location;
+            userDTO.UserPreferences = user.UserPreferences;
+            userDTO.FirebaseId = user.FirebaseId;
+
             var jwt = _jwtService.Generate(user.Id);
             Response.Cookies.Append("token", jwt, new CookieOptions
             {
@@ -107,7 +124,8 @@ namespace MobileAppBackend.Controllers
             {
                 statusCode = 200,
                 message = "Success",
-                token = jwt
+                token = jwt,
+                user = userDTO,
             });
         }
 
@@ -122,8 +140,21 @@ namespace MobileAppBackend.Controllers
                 var token = _jwtService.Verify(jwtString);
                 int userId = int.Parse(token.Issuer);
                 var user = _repository.getById(userId);
-                Console.WriteLine("Retrieved user:" + user.Email);
-                return Ok(user);
+                //Console.WriteLine("Retrieved user:" + user.Email);
+                UserDTO userDTO = new UserDTO();
+                userDTO.Email = user.Email;
+                userDTO.Id = user.Id;
+                userDTO.Firstname = user.FirstName;
+                userDTO.Lastname = user.LastName;
+                userDTO.PhoneNumber = user.PhoneNumber;
+                userDTO.DOB = user.DOB;
+                userDTO.Gender = user.Gender;
+                userDTO.Matches = user.Matches;
+                userDTO.Location = user.Location;
+                userDTO.UserPreferences = user.UserPreferences;
+                userDTO.FirebaseId = user.FirebaseId;
+
+                return Ok(userDTO);
             }
             catch (Exception e)
             {
@@ -141,6 +172,33 @@ namespace MobileAppBackend.Controllers
                 statusCode = 200,
                 message = "Success"
             });
+        }
+
+        [HttpGet("checkUserExists/{email}")]
+        public IActionResult GetUserByEmail(string email)
+        {
+            User user = _repository.getByEmail(email);
+            if(user == null)
+            {
+                return NotFound();
+            }
+            else
+            {
+                UserDTO userDTO = new UserDTO();
+                userDTO.Email = user.Email;
+                userDTO.Id = user.Id;
+                userDTO.Firstname = user.FirstName;
+                userDTO.Lastname = user.LastName;
+                userDTO.PhoneNumber = user.PhoneNumber;
+                userDTO.DOB = user.DOB;
+                userDTO.Gender = user.Gender;
+                userDTO.Matches = user.Matches;
+                userDTO.Location = user.Location;
+                userDTO.UserPreferences = user.UserPreferences;
+                userDTO.FirebaseId = user.FirebaseId;
+
+                return Ok(userDTO);
+            }
         }
 
     }

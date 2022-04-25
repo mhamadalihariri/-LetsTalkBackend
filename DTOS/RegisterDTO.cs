@@ -13,5 +13,6 @@ namespace Let_sTalk.DTOS
         public string Gender { get; set; }
         public string Phone { get; set; }
         public Preference Preference { get; set; }
+        public string FirebaseId { get; set; }
     }
 }

@@ -28,6 +28,7 @@ namespace Let_sTalk.Models
         public List<Match> Matches { get; set; }
         public int IsDeleted { get; set; }
         public virtual List<UserPreference>? UserPreferences { get; set; }
+        public string FirebaseId { get; set; }
 
         public User()
         {
