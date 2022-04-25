@@ -27,7 +27,7 @@ namespace Let_sTalk.Controllers
             try
             {
                 var exsistingUser = _repository.getMatch(dto.User1, dto.User2);
-                Console.WriteLine(exsistingUser);
+                //Console.WriteLine(exsistingUser);
                 var match = new Match
                 {
                     User1 = dto.User1,
@@ -67,6 +67,33 @@ namespace Let_sTalk.Controllers
                 });
             }
             
+        }
+
+        [HttpGet("getMatchesByUserId/{id}")]
+        public IActionResult GetMatchesByUserId(int id)
+        {
+            try
+            {
+                var matchingUsers = _repository.getMatchesByUserId(id);
+                Console.WriteLine(matchingUsers);
+
+                return Ok(new
+                {
+                    statusCode = 200,
+                    message = "",
+                    firebaseIdForMatchingUsers = matchingUsers,
+                });
+            }
+            catch (Exception e)
+            {
+                return BadRequest(new
+                {
+                    statusCode = 404,
+                    message = "Internal Server Error",
+                    Exception = e
+                });
+            }
+
         }
 
     }
