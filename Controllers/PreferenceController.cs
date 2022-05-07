@@ -93,5 +93,16 @@ namespace Let_sTalk.Controllers
                 return NotFound();
             }
         }
+
+        [HttpGet("getUsers/{id}")]
+        public IActionResult GetUsersByPreferenceId(int id) 
+        {
+            try {
+                var users = _repository.getUsersByPreferenceId(id);
+                return Ok(users);
+            } catch(Exception e){
+                return NotFound();
+            }
+        }
     }
 }

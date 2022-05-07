@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Let_sTalk.Models;
-
+using LetsTalkBackend.DTOS;
 
 namespace Let_sTalk.Data
 {
@@ -14,5 +14,6 @@ namespace Let_sTalk.Data
         Preference getById(int id);
         List<Preference> getAll();
         void deleteById(Preference pref);
+        HashSet<UserDTO> getUsersByPreferenceId(int preferenceId);
     }
 }
