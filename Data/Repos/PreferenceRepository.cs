@@ -54,21 +54,22 @@ namespace Let_sTalk.Data.Repos
                 {
                     UserDTO dto = new UserDTO();
                     User foundUser = _dbContext.users.Find(idUser);
+                    List<UserPreference> foundUserPreference = _dbContext.userPreferences.Where(up => up.UserId == idUser).ToList();
                     dto.Id = idUser;
                     dto.PhoneNumber = foundUser.PhoneNumber;
                     dto.Firstname = foundUser.FirstName;
                     dto.Lastname = foundUser.LastName;
                     dto.Email = foundUser.Email;
-                    dto.UserPreferences = foundUser.UserPreferences;
+                    dto.UserPreferences = foundUserPreference;
                     dto.Gender = foundUser.Gender;
                     dto.FirebaseId = foundUser.FirebaseId;
                     dto.Location = foundUser.Location;
                     dto.Image = foundUser.Image;
+                    dto.DOB = foundUser.DOB;
                     dto.PhoneNumber = foundUser.PhoneNumber;
                     users.Add(dto);
                 }
             }
-
             return users;
         }
     }
