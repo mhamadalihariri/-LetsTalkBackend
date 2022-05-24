@@ -6,6 +6,8 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
+using System.Text.Json;
+using System.Json;
 
 namespace Let_sTalk.Models
 {
@@ -22,7 +24,7 @@ namespace Let_sTalk.Models
         public string DOB { get; set; }
         public string? Image { get; set; }
         public string Gender { get; set; }
-        public virtual Location? Location { get; set; }
+        public Location Location { get; set; }
 
         [NotMapped]
         public List<Match> Matches { get; set; }

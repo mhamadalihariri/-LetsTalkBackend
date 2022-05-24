@@ -14,6 +14,8 @@ namespace Let_sTalk.Data
         Preference getById(int id);
         List<Preference> getAll();
         void deleteById(Preference pref);
-        HashSet<UserDTO> getUsersByPreferenceId(int preferenceId);
+        HashSet<UserDTO> getUsersHavingSamePreference(string email, double rangeInKm);
+        HashSet<Preference> getPreferencesByUserId(int id);
+
     }
 }

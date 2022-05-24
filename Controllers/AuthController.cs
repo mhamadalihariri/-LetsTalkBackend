@@ -10,6 +10,8 @@ using System.Threading.Tasks;
 using Let_sTalk.Models;
 using Let_sTalk.Data.IRepos;
 using LetsTalkBackend.DTOS;
+using LetsTalkBackend.Helpers;
+using LetsTalkBackend.Models;
 
 namespace MobileAppBackend.Controllers
 {
@@ -20,16 +22,19 @@ namespace MobileAppBackend.Controllers
         private readonly IUserRepository _repository;
         private readonly IUserPreferenceReporsitory userPreferenceRepository;
         private readonly JwtService _jwtService;
+        private readonly IPreferenceRepository _preferenceRepository;
+        private readonly IMailService mailService;
 
-        public AuthController(IUserRepository repository, IUserPreferenceReporsitory _userPrefRepo, JwtService jwtService)
+        public AuthController(IUserRepository repository, IUserPreferenceReporsitory _userPrefRepo, IPreferenceRepository preferenceRepository, JwtService jwtService)
         {
             _repository = repository;
             _jwtService = jwtService;
             userPreferenceRepository = _userPrefRepo;
+            _preferenceRepository = preferenceRepository;
         }
 
         [HttpPost("register")]
-        public IActionResult RegisterAsync(RegisterDTO dto)
+        public async Task<IActionResult> RegisterAsync(RegisterDTO dto)
         {
             try
             {
@@ -42,7 +47,9 @@ namespace MobileAppBackend.Controllers
                         message = "Email already in use"
                     });
                 }
-
+                Location userLocation = new Location();
+                userLocation.Longitude = dto.Location.Longitude;
+                userLocation.Latitude = dto.Location.Latitude;
                 var user = new User
                 {
                     FirstName = dto.Firstname,
@@ -53,24 +60,32 @@ namespace MobileAppBackend.Controllers
                     Password = BCrypt.Net.BCrypt.HashPassword(dto.Password),
                     Gender = dto.Gender,
                     PhoneNumber = dto.Phone,
-                    FirebaseId = dto.FirebaseId
+                    FirebaseId = dto.FirebaseId,
+                    Location = userLocation
                 };
-                var u = _repository.create(user);
-                Preference selectedPreference = dto.Preference;
-                var newuserPref = userPreferenceRepository.create(new UserPreference
+                var u = _repository.createOrUpdate(user);
+                List<Preference> selectedPreferences = dto.Preferences;
+                if (selectedPreferences != null)
                 {
-                    PreferenceId = selectedPreference.Id,
-                    UserId = u.Id
-                });
-                u.UserPreferences = new List<UserPreference>();
-                u.UserPreferences.Add(newuserPref);
-
-                //var updatedUser = _repository.update(u);
+                    foreach (Preference selectedPreference in selectedPreferences)
+                    {
+                        var newuserPref = userPreferenceRepository.create(new UserPreference
+                        {
+                            PreferenceId = selectedPreference.Id,
+                            UserId = u.Id
+                        });
+                        u.UserPreferences = new List<UserPreference>();
+                        u.UserPreferences.Add(newuserPref);
+                    }
+                }
+                WelcomeRequest welcomeRequest = new WelcomeRequest();
+                welcomeRequest.ToEmail = dto.Email;
+                welcomeRequest.UserName = dto.Firstname + " " + dto.Lastname;
+                await mailService.SendWelcomeEmailAsync(welcomeRequest);
                 return Ok(new
                 {
                     statusCode = 200,
                     message = "Success",
-                    //user = u
                 });
             }
             catch (Exception ex)
@@ -84,6 +99,7 @@ namespace MobileAppBackend.Controllers
             }
         }
         [HttpPost("login")]
+        //[ValidateAntiForgeryToken]
         public IActionResult Login(LoginDTO dto)
         {
             User user = _repository.getByEmail(dto.Email);
@@ -102,6 +118,12 @@ namespace MobileAppBackend.Controllers
                 });
             }
 
+            List<Preference> preferences = new List<Preference>();
+            List<UserPreference> userPrefs = user.UserPreferences;
+            foreach (UserPreference pref in userPrefs)
+            {
+                preferences.Add(_preferenceRepository.getById(pref.PreferenceId));
+            }
             UserDTO userDTO = new UserDTO();
             userDTO.Email = user.Email;
             userDTO.Id = user.Id;
@@ -112,8 +134,9 @@ namespace MobileAppBackend.Controllers
             userDTO.Gender = user.Gender;
             userDTO.Matches = user.Matches;
             userDTO.Location = user.Location;
-            userDTO.UserPreferences = user.UserPreferences;
+            userDTO.Preferences = preferences;
             userDTO.FirebaseId = user.FirebaseId;
+            userDTO.Location = user.Location;
 
             var jwt = _jwtService.Generate(user.Id);
             Response.Cookies.Append("token", jwt, new CookieOptions
@@ -140,7 +163,13 @@ namespace MobileAppBackend.Controllers
                 var token = _jwtService.Verify(jwtString);
                 int userId = int.Parse(token.Issuer);
                 var user = _repository.getById(userId);
-                //Console.WriteLine("Retrieved user:" + user.Email);
+                List<Preference> preferences = new List<Preference>();
+                List<UserPreference> userPrefs = user.UserPreferences;
+                foreach (UserPreference pref in userPrefs)
+                {
+                    preferences.Add(_preferenceRepository.getById(pref.PreferenceId));
+                }
+
                 UserDTO userDTO = new UserDTO();
                 userDTO.Email = user.Email;
                 userDTO.Id = user.Id;
@@ -151,8 +180,10 @@ namespace MobileAppBackend.Controllers
                 userDTO.Gender = user.Gender;
                 userDTO.Matches = user.Matches;
                 userDTO.Location = user.Location;
-                userDTO.UserPreferences = user.UserPreferences;
+                userDTO.Preferences = preferences;
                 userDTO.FirebaseId = user.FirebaseId;
+                userDTO.Location = user.Location;
+
 
                 return Ok(userDTO);
             }
@@ -178,28 +209,102 @@ namespace MobileAppBackend.Controllers
         public IActionResult GetUserByEmail(string email)
         {
             User user = _repository.getByEmail(email);
-            if(user == null)
+            if (user == null)
             {
                 return NotFound();
             }
             else
             {
-                UserDTO userDTO = new UserDTO();
-                userDTO.Email = user.Email;
-                userDTO.Id = user.Id;
-                userDTO.Firstname = user.FirstName;
-                userDTO.Lastname = user.LastName;
-                userDTO.PhoneNumber = user.PhoneNumber;
-                userDTO.DOB = user.DOB;
-                userDTO.Gender = user.Gender;
-                userDTO.Matches = user.Matches;
-                userDTO.Location = user.Location;
-                userDTO.UserPreferences = user.UserPreferences;
-                userDTO.FirebaseId = user.FirebaseId;
+                List<Preference> preferences = new List<Preference>();
+                List<UserPreference> userPrefs = user.UserPreferences;
+                foreach (UserPreference pref in userPrefs)
+                {
+                    preferences.Add(_preferenceRepository.getById(pref.PreferenceId));
+                }
+                    UserDTO userDTO = new UserDTO();
+                    //userDTO.Email = user.Email;
+                    userDTO.Id = user.Id;
+                   // userDTO.Firstname = user.FirstName;
+                   //userDTO.Lastname = user.LastName;
+                   // userDTO.PhoneNumber = user.PhoneNumber;
+                   // userDTO.DOB = user.DOB;
+                   // userDTO.Gender = user.Gender;
+                    //userDTO.Matches = user.Matches;
+                    //userDTO.Location = user.Location;
+                    //userDTO.Preferences = preferences;
+                   // userDTO.FirebaseId = user.FirebaseId;
+                    return Ok(userDTO);
 
-                return Ok(userDTO);
+            }
+            
+        }
+
+        [HttpPost("update")]
+        //[ValidateAntiForgeryToken]
+        public IActionResult UpdateUser(RegisterDTO registerDTO)
+        {
+            try
+            {
+                Location userLocation = new Location();
+                userLocation.Longitude = registerDTO.Location.Longitude;
+                userLocation.Latitude = registerDTO.Location.Latitude;
+                var user = new User
+                {
+                    FirstName = registerDTO.Firstname,
+                    LastName = registerDTO.Lastname,
+                    Email = registerDTO.Email,
+                    DOB = registerDTO.Dob,
+                    Image = registerDTO.Image,
+                    Password = BCrypt.Net.BCrypt.HashPassword(registerDTO.Password),
+                    Gender = registerDTO.Gender,
+                    PhoneNumber = registerDTO.Phone,
+                    FirebaseId = registerDTO.FirebaseId,
+                    Location = userLocation
+
+
+                };
+                var updatedUser = _repository.createOrUpdate(user);
+                List<Preference> selectedPreferences = registerDTO.Preferences;
+                if (selectedPreferences != null)
+                {
+                    foreach (Preference selectedPreference in selectedPreferences)
+                    {
+                        if(updatedUser.UserPreferences.Any(up => up.PreferenceId == selectedPreference.Id) == false)
+                        {
+                            var newuserPref = userPreferenceRepository.create(new UserPreference
+                            {
+                                PreferenceId = selectedPreference.Id,
+                                UserId = updatedUser.Id
+                            });
+                            updatedUser.UserPreferences = new List<UserPreference>();
+                            updatedUser.UserPreferences.Add(newuserPref);
+                        }
+                    }
+                }
+
+                return Ok(new
+                {
+                    statusCode = 200,
+                    message = "Success",
+                });
+            }catch (Exception ex)
+            {
+                return BadRequest();
             }
         }
 
+        [HttpPost("changePassword/{userId}")]
+        public IActionResult ChangePassword(int userId, string newPassword)
+        {
+            try
+            {
+                _repository.ChangePassword(userId, newPassword);
+                return Ok();
+            } catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
     }
+
 }

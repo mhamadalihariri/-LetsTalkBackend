@@ -96,5 +96,37 @@ namespace Let_sTalk.Controllers
 
         }
 
+        [HttpGet("checkifMatch/{userId}/{matcheeId}")]
+        public IActionResult CheckIfMatch(int userId, string matcheeId)
+        {
+            //Console.Clear();
+            try
+            {
+                HashSet<string> matchingIds = _repository.getMatchesByUserId(userId);
+                foreach(var matchingId in matchingIds)
+                {
+                    if(matchingId.Equals(matcheeId))
+                    {
+                        Console.WriteLine("The user " + matchingId + "is a match !!!");
+                        return Ok(
+                            new{
+                            statusCode = 200,
+                            message = "",
+                            isMatch = true
+                        });
+                    }
+                }
+                return Ok(new
+                {
+                    statusCode = 200,
+                    message = "",
+                    isMatch = false
+                });
+            }catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+                return BadRequest();
+            }
+        }
     }
 }

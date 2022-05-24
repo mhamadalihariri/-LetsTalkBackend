@@ -67,6 +67,7 @@ namespace Let_sTalk.Controllers
             try
             {
                 var prefs = _repository.getAll();
+                Console.WriteLine("prefss " + prefs);
                 return Ok(prefs);
             }
             catch (Exception e)
@@ -94,13 +95,30 @@ namespace Let_sTalk.Controllers
             }
         }
 
-        [HttpGet("getUsers/{id}")]
-        public IActionResult GetUsersByPreferenceId(int id) 
+        [HttpGet("getUsersHavingSamePreference/{email}/{range}")]
+        public IActionResult GetUsersByPreferenceId(string email,double range)
         {
-            try {
-                var users = _repository.getUsersByPreferenceId(id);
+            try
+            {
+                var users = _repository.getUsersHavingSamePreference(email,range);
                 return Ok(users);
-            } catch(Exception e){
+            }
+            catch (Exception e)
+            {
+                return NotFound();
+            }
+        }
+
+        [HttpGet("getPreferencesByUser/{userId}")]
+        public IActionResult GetUserPreferences(int userId)
+        {
+            try
+            {
+                var preferences = _repository.getPreferencesByUserId(userId);
+                return Ok(preferences);
+            }
+            catch (Exception e)
+            {
                 return NotFound();
             }
         }

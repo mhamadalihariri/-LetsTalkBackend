@@ -1,5 +1,6 @@
 ﻿using Let_sTalk.Models;
 using System.Collections.Generic;
+using System.Json;
 
 namespace LetsTalkBackend.DTOS
 {
@@ -13,8 +14,8 @@ namespace LetsTalkBackend.DTOS
         public string? Image { get; set; }
         public string Gender { get; set; }
         public string PhoneNumber { get; set; }
-        public Preference Preference { get; set; }
-        public List<UserPreference> UserPreferences { get; set; }
+        //public Preference Preference { get; set; }
+        public List<Preference> Preferences { get; set; }
         public Location Location { get; set; }
         public List<Match> Matches { get; set; }
         public string FirebaseId { get; set; }

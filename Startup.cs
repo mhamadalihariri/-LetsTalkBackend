@@ -22,7 +22,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc.NewtonsoftJson;
-
+using LetsTalkBackend.Models;
+using LetsTalkBackend.Helpers;
 
 namespace LetsTalkBackend
 {
@@ -45,9 +46,10 @@ namespace LetsTalkBackend
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<IPreferenceRepository, PreferenceRepository>();
             services.AddScoped<IMatchRepository, MatchRepository>();
-           services.AddScoped<IUserPreferenceReporsitory, UserPreferenceRepository>();
-           services.AddScoped<JwtService>();
-           services.Configure<JwtConfig>(Configuration.GetSection("JwtConfig"));
+            services.AddScoped<IUserPreferenceReporsitory, UserPreferenceRepository>();
+            services.AddScoped<JwtService>();
+            services.AddTransient<IMailService, MailService>();
+            services.Configure<JwtConfig>(Configuration.GetSection("JwtConfig"));
             services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -87,6 +89,9 @@ namespace LetsTalkBackend
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "LetsTalkBackend", Version = "v1" });
             });
+
+            services.Configure<MailSettings>(Configuration.GetSection("MailSettings"));
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

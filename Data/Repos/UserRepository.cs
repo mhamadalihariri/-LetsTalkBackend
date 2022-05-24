@@ -15,28 +15,53 @@ namespace Let_sTalk.Data.Repos
         {
             _dbContext = dbContext;
         }
-        public User create(User user)
+
+        public void ChangePassword(int id, string password)
         {
+            var existingUser = _dbContext.users.FirstOrDefault(x => x.Id == id);
+            if (existingUser != null)
+            {
+                existingUser.Password = password;
+                _dbContext.users.Update(existingUser);
+                _dbContext.SaveChanges();
+            }
+        }
+
+        public User createOrUpdate(User user)
+        {
+            var existingUser = _dbContext.users.FirstOrDefault(u => u.Email == user.Email);
+            if(existingUser == null)
+            {
             _dbContext.users.Add(user);
+
+            }else
+            {
+                _dbContext.users.Update(user);
+            }
             _dbContext.SaveChanges();
             return user;
         }
 
         public User getByEmail(string email)
         {
-            return _dbContext.users.FirstOrDefault(u => u.Email == email);
+            Console.WriteLine("Email " + email);
+            User user = _dbContext.users.FirstOrDefault(u => u.Email == email);
+            if(user != null)
+            {
+                //Console.WriteLine(user.Email);
+                List<UserPreference> foundUserPreference = _dbContext.userPreferences.Where(up => up.UserId == user.Id).ToList();
+                user.UserPreferences = foundUserPreference;
+            }
+            return user;
         }
 
         public User getById(int id)
         {
-            return _dbContext.users.Find(id);
-        }
-
-        public User update(User user)
-        {
-            _dbContext.users.Update(user);
-            _dbContext.SaveChanges();
+            User user = _dbContext.users.Find(id);
+            List<UserPreference> foundUserPreference = _dbContext.userPreferences.Where(up => up.UserId == id).ToList();
+            user.UserPreferences = foundUserPreference;
             return user;
         }
+
     }
 }

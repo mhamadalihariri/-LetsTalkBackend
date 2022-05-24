@@ -9,9 +9,10 @@ namespace Let_sTalk.Data
 {
     public interface IUserRepository
     {
-        User create(User user);
+        User createOrUpdate(User user);
         User getByEmail(string email);
         User getById(int id);
-        User update(User user);
+
+        void ChangePassword(int id, String password);
     }
 }
