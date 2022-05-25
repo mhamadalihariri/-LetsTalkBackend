@@ -3,6 +3,7 @@ using MailKit.Net.Smtp;
 using MailKit.Security;
 using Microsoft.Extensions.Options;
 using MimeKit;
+using System;
 using System.IO;
 using System.Threading.Tasks;
 
@@ -44,6 +45,7 @@ namespace LetsTalkBackend.Helpers
             using var smtp = new SmtpClient();
             smtp.Connect(_mailSettings.Host, _mailSettings.Port, SecureSocketOptions.StartTls);
             smtp.Authenticate(_mailSettings.Mail, _mailSettings.Password);
+            Console.WriteLine("Sending email to " + mailRequest.ToEmail);
             await smtp.SendAsync(email);
             smtp.Disconnect(true);
         }
@@ -65,6 +67,7 @@ namespace LetsTalkBackend.Helpers
             using var smtp = new SmtpClient();
             smtp.Connect(_mailSettings.Host, _mailSettings.Port, SecureSocketOptions.StartTls);
             smtp.Authenticate(_mailSettings.Mail, _mailSettings.Password);
+            Console.WriteLine("Sending email to " + request.ToEmail);
             await smtp.SendAsync(email);
             smtp.Disconnect(true);
         }

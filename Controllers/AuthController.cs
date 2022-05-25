@@ -25,12 +25,13 @@ namespace MobileAppBackend.Controllers
         private readonly IPreferenceRepository _preferenceRepository;
         private readonly IMailService mailService;
 
-        public AuthController(IUserRepository repository, IUserPreferenceReporsitory _userPrefRepo, IPreferenceRepository preferenceRepository, JwtService jwtService)
+        public AuthController(IUserRepository repository, IUserPreferenceReporsitory _userPrefRepo, IPreferenceRepository preferenceRepository, JwtService jwtService, IMailService service)
         {
             _repository = repository;
             _jwtService = jwtService;
             userPreferenceRepository = _userPrefRepo;
             _preferenceRepository = preferenceRepository;
+            mailService = service;
         }
 
         [HttpPost("register")]
@@ -81,6 +82,7 @@ namespace MobileAppBackend.Controllers
                 WelcomeRequest welcomeRequest = new WelcomeRequest();
                 welcomeRequest.ToEmail = dto.Email;
                 welcomeRequest.UserName = dto.Firstname + " " + dto.Lastname;
+                Console.WriteLine(welcomeRequest.UserName + welcomeRequest.ToEmail);
                 await mailService.SendWelcomeEmailAsync(welcomeRequest);
                 return Ok(new
                 {
@@ -103,6 +105,7 @@ namespace MobileAppBackend.Controllers
         public IActionResult Login(LoginDTO dto)
         {
             User user = _repository.getByEmail(dto.Email);
+            Console.WriteLine("inn");
             if (user == null) return BadRequest(new
             {
                 statusCode = 401,

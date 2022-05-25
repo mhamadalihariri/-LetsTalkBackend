@@ -48,6 +48,7 @@ namespace LetsTalkBackend
             services.AddScoped<IMatchRepository, MatchRepository>();
             services.AddScoped<IUserPreferenceReporsitory, UserPreferenceRepository>();
             services.AddScoped<JwtService>();
+            services.AddScoped<GeoLocationService>();
             services.AddTransient<IMailService, MailService>();
             services.Configure<JwtConfig>(Configuration.GetSection("JwtConfig"));
             services.AddAuthentication(options =>

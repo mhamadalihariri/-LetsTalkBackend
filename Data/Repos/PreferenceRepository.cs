@@ -6,16 +6,18 @@ using Let_sTalk.Models;
 using Let_sTalk.Data.Context;
 using LetsTalkBackend.DTOS;
 using LetsTalkBackend.Helpers;
+using Microsoft.EntityFrameworkCore;
 
 namespace Let_sTalk.Data.Repos
 {
     public class PreferenceRepository : IPreferenceRepository
     {
         private readonly MyDbContext _dbContext;
-        private readonly GeoLocationService geoLocationService;
-        public PreferenceRepository(MyDbContext dbContext)
+        private readonly GeoLocationService locationService;
+        public PreferenceRepository(MyDbContext dbContext, GeoLocationService geoLocationService)
         {
             _dbContext = dbContext;
+            locationService = geoLocationService;
         }
 
         public Preference create(Preference pref)
@@ -48,31 +50,40 @@ namespace Let_sTalk.Data.Repos
 
         public HashSet<UserDTO> getUsersHavingSamePreference(string userEmail, double rangeInKm)
         {
-            User mainUser = _dbContext.users.Where(u => u.Email == userEmail).FirstOrDefault();
+            User mainUser = _dbContext.users.Where(u => u.Email == userEmail).Include(u=> u.Location).FirstOrDefault();
             Console.WriteLine("main userrrr mfff " + mainUser.Email);
             List<int> PreferencesIds = _dbContext.userPreferences.Where(p => p.UserId == mainUser.Id).Select(p=> p.PreferenceId).ToList();
+            Console.WriteLine("prefss " + PreferencesIds.Count);
             HashSet<UserDTO> users = new HashSet<UserDTO>();
             foreach(int PreferenceId in PreferencesIds)
             {
+            //Console.WriteLine(PreferenceId);
+            //Console.WriteLine("-----------");
+            //Console.WriteLine(mainUser.Id);
                 List<UserPreference> userPreferences = _dbContext.userPreferences.Where(up => up.PreferenceId == PreferenceId && up.UserId != mainUser.Id).ToList();
                 List<Match> allMatches = _dbContext.matches.ToList();
                 foreach (Match match in allMatches)
                 {
                     foreach (UserPreference up in userPreferences)
                     {
-                        User foundUser = _dbContext.users.Find(up.UserId);
+                        User foundUser = _dbContext.users.Include(x => x.Location).FirstOrDefault( u=> u.Id == up.UserId);
                         if (foundUser != null && (match.User1 != up.UserId && match.User2 != up.UserId))
                         {
-                            Console.WriteLine("main user Longitude : "+ mainUser.Location.Longitude);
-                            Console.WriteLine("main user Latitude :" + mainUser.Location.Latitude);
+                            //Console.WriteLine("main user Longitude : "+ mainUser.Location.Longitude);
+                            //Console.WriteLine("main user Latitude :" + mainUser.Location.Latitude);
 
-                            Console.WriteLine("foundUser user Longitude : " + foundUser.Location.Longitude);
-                            Console.WriteLine("foundUser user Latitude :" + foundUser.Location.Latitude);
+                            //Console.WriteLine("foundUser user Longitude : " + foundUser.Location.Longitude);
+                            //Console.WriteLine("foundUser user Latitude :" + foundUser.Location.Latitude);
 
-                            Console.WriteLine("range in km :"+ rangeInKm);
+                            //Console.WriteLine("range in km :"+ rangeInKm);
+                            //Console.WriteLine("before distance");
+                            var distance = locationService.GetDistance(mainUser.Location.Longitude, mainUser.Location.Latitude, foundUser.Location.Longitude, foundUser.Location.Latitude);
+                            //Console.WriteLine("after distance");
 
-                            //Here we are comparing the distance between the main actor, and all the users having the same preference if they are within a specific area
-                            if (geoLocationService.GetDistance(mainUser.Location.Longitude, mainUser.Location.Latitude, foundUser.Location.Longitude, foundUser.Location.Latitude) < rangeInKm * 1000)
+                            //Console.WriteLine("distancess " + distance); 
+                                
+                                //Here we are comparing the distance between the main actor, and all the users having the same preference if they are within a specific area
+                            if (distance < rangeInKm * 1000)
                             {
                                 Console.WriteLine("User is in the area");
                                 UserDTO dto = new UserDTO();
@@ -94,6 +105,9 @@ namespace Let_sTalk.Data.Repos
                                 dto.Image = foundUser.Image;
                                 dto.DOB = foundUser.DOB;
                                 dto.PhoneNumber = foundUser.PhoneNumber;
+
+                                bool userExists = users.Any(u => u.Email == dto.Email);
+                                if(!userExists)
                                 users.Add(dto);
 
                             } 
@@ -102,7 +116,8 @@ namespace Let_sTalk.Data.Repos
                 }
 
             }
-            Console.WriteLine("users to return count : " + users.Count);
+            //Console.WriteLine("users to return count : " + users.Count);
+            users.ToList().ForEach(us =>Console.WriteLine(us.Firstname));
             return users;
         }
 
